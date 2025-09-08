@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSA Algorithm Visualizer</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <h1>DSA Algorithm Visualizer</h1>
+            <p>Interactive C++ Algorithm Learning Tool</p>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <nav class="algorithm-nav">
+                    <h3>Algorithm Categories</h3>
+                    
+                    <div class="category-section">
+                        <h4>Sorting Algorithms</h4>
+                        <div class="algorithm-list">
+                            <button class="algorithm-btn" data-category="sorting" data-algorithm="Bubble Sort">Bubble Sort</button>
+                            <button class="algorithm-btn" data-category="sorting" data-algorithm="Selection Sort">Selection Sort</button>
+                            <button class="algorithm-btn" data-category="sorting" data-algorithm="Merge Sort">Merge Sort</button>
+                            <button class="algorithm-btn" data-category="sorting" data-algorithm="Quick Sort">Quick Sort</button>
+                        </div>
+                    </div>
+
+                    <div class="category-section">
+                        <h4>Searching Algorithms</h4>
+                        <div class="algorithm-list">
+                            <button class="algorithm-btn" data-category="searching" data-algorithm="Linear Search">Linear Search</button>
+                            <button class="algorithm-btn" data-category="searching" data-algorithm="Binary Search">Binary Search</button>
+                        </div>
+                    </div>
+
+                    <div class="category-section">
+                        <h4>Graph Algorithms</h4>
+                        <div class="algorithm-list">
+                            <button class="algorithm-btn" data-category="graph" data-algorithm="Breadth-First Search">Breadth-First Search</button>
+                        </div>
+                    </div>
+                </nav>
+            </aside>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                <!-- Visualization Section -->
+                <section class="visualization-section">
+                    <div class="algorithm-info">
+                        <h2 id="algorithm-title">Select an Algorithm</h2>
+                        <p id="algorithm-description">Choose an algorithm from the sidebar to begin visualization</p>
+                    </div>
+
+                    <!-- Input Controls -->
+                    <div class="input-controls">
+                        <div class="control-group">
+                            <label for="array-size">Array Size:</label>
+                            <input type="range" id="array-size" min="5" max="50" value="10">
+                            <span id="array-size-value">10</span>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="custom-input">Custom Values:</label>
+                            <input type="text" id="custom-input" placeholder="e.g., 5,2,8,1,9" class="form-control">
+                        </div>
+
+                        <div class="control-group search-controls" style="display: none;">
+                            <label for="search-target">Search Target:</label>
+                            <input type="number" id="search-target" value="5" class="form-control">
+                        </div>
+
+                        <div class="control-buttons">
+                            <button id="generate-random" class="btn btn--secondary">Generate Random</button>
+                            <button id="apply-custom" class="btn btn--secondary">Apply Custom</button>
+                        </div>
+                    </div>
+
+                    <!-- Animation Controls -->
+                    <div class="animation-controls">
+                        <div class="playback-controls">
+                            <button id="reset-btn" class="btn btn--outline">Reset</button>
+                            <button id="step-back-btn" class="btn btn--outline">Step Back</button>
+                            <button id="play-pause-btn" class="btn btn--primary">Play</button>
+                            <button id="step-forward-btn" class="btn btn--outline">Step Forward</button>
+                        </div>
+
+                        <div class="speed-control">
+                            <label for="speed-slider">Speed:</label>
+                            <input type="range" id="speed-slider" min="0.5" max="3" step="0.5" value="1">
+                            <span id="speed-value">1x</span>
+                        </div>
+
+                        <div class="step-info">
+                            <span id="step-counter">Step: 0</span>
+                            <span id="status-message">Ready to start</span>
+                        </div>
+                    </div>
+
+                    <!-- Visualization Canvas -->
+                    <div class="visualization-canvas" id="visualization-canvas">
+                        <div class="array-container" id="array-container"></div>
+                        <div class="graph-container" id="graph-container" style="display: none;"></div>
+                    </div>
+                </section>
+
+                <!-- Code Panel -->
+                <section class="code-section">
+                    <h3>C++ Implementation</h3>
+                    <div class="code-container">
+                        <pre id="code-display"><code>// Select an algorithm to view its C++ implementation</code></pre>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Complexity Information Panel -->
+        <section class="complexity-panel">
+            <div class="complexity-info">
+                <div class="complexity-text">
+                    <h3>Complexity Analysis</h3>
+                    <div class="complexity-details">
+                        <div class="time-complexity">
+                            <h4>Time Complexity:</h4>
+                            <div class="complexity-cases">
+                                <span class="complexity-case">Best: <span id="time-best">-</span></span>
+                                <span class="complexity-case">Average: <span id="time-average">-</span></span>
+                                <span class="complexity-case">Worst: <span id="time-worst">-</span></span>
+                            </div>
+                        </div>
+                        <div class="space-complexity">
+                            <h4>Space Complexity:</h4>
+                            <span id="space-complexity">-</span>
+                        </div>
+                        <div class="complexity-explanation">
+                            <p id="complexity-description">Select an algorithm to see its complexity analysis</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="complexity-chart">
+                    <h4>Time Complexity Graph</h4>
+                    <div class="chart-container" style="position: relative; height: 200px;">
+                        <canvas id="complexity-chart-canvas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

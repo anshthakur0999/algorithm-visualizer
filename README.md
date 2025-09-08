@@ -2,6 +2,8 @@
 
 An interactive web-based tool for visualizing Data Structures and Algorithms (DSA) with C++ implementations. This educational platform helps students and developers understand how various algorithms work through step-by-step visual animations.
 
+🚀 **[Live Demo](https://algorithm-visualizer-xi-nine.vercel.app)**
+
 ![DSA Algorithm Visualizer](https://img.shields.io/badge/Status-Active-brightgreen)
 ![HTML5](https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white)
 ![CSS3](https://img.shields.io/badge/CSS3-1572B6?logo=css3&logoColor=white)

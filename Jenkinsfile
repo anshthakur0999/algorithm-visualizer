@@ -71,7 +71,7 @@ pipeline {
                             // Basic security checks
                             sh '''
                                 echo "Checking for sensitive data..."
-                                if grep -r "password\|secret\|key" --include="*.js" --include="*.html" --include="*.css" . | grep -v "// " | grep -v "/*"; then
+                                if grep -r "password\\|secret\\|key" --include="*.js" --include="*.html" --include="*.css" . | grep -v "// " | grep -v "/*"; then
                                     echo "⚠️  Potential sensitive data found in code"
                                 else
                                     echo "✅ No obvious sensitive data found"
@@ -246,3 +246,5 @@ pipeline {
         }
     }
 }
+
+

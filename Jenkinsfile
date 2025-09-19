@@ -175,7 +175,7 @@ pipeline {
                             kubectl apply -f k8s/hpa.yaml
                             
                             # Wait for rollout to complete
-                            kubectl rollout status deployment/algorithm-visualizer -n algorithm-visualizer --timeout=300s
+                            kubectl rollout status deployment/algorithm-visualizer -n algorithm-visualizer --timeout=600s
                             
                             # Verify deployment
                             kubectl get pods -n algorithm-visualizer
@@ -231,6 +231,7 @@ pipeline {
         }
     }
 }
+
 
 
 

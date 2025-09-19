@@ -7,7 +7,7 @@ metadata:
     app: algorithm-visualizer
     version: v1
 spec:
-  replicas: 3
+  replicas: 1  # Reduce from 3 to 1 for testing
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -35,22 +35,18 @@ spec:
           limits:
             memory: "128Mi"
             cpu: "100m"
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
         livenessProbe:
           httpGet:
-            path: /health
+            path: /
             port: 8080
           initialDelaySeconds: 30
           periodSeconds: 10
-          timeoutSeconds: 5
-          failureThreshold: 3
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          timeoutSeconds: 3
-          failureThreshold: 3
         env:
         - name: NODE_ENV
           value: "production"
@@ -90,3 +86,5 @@ spec:
                   values:
                   - algorithm-visualizer
               topologyKey: kubernetes.io/hostname
+
+

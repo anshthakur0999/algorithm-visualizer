@@ -410,4 +410,12 @@ docker run -p 8080:8080 anshthakur503/algorithm-visualizer:latest
 
 # If it works locally but fails in K8s, it's a configuration issue
 
+# Apply the fixed deployment
+kubectl apply -f k8s/deployment.yaml
+
+# Delete the failing pods to force recreation
+kubectl delete pods -n algorithm-visualizer -l app=algorithm-visualizer
+
+# Watch the new pods start
+kubectl get pods -n algorithm-visualizer -w
 

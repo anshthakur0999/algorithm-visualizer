@@ -35,31 +35,6 @@ spec:
           limits:
             memory: "256Mi"
             cpu: "200m"
-        readinessProbe:
-          httpGet:
-            path: /
-            port: 8080
-          initialDelaySeconds: 5
-          periodSeconds: 3
-          timeoutSeconds: 2
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 8080
-          initialDelaySeconds: 15
-          periodSeconds: 5
-          timeoutSeconds: 2
-        env:
-        - name: NODE_ENV
-          value: "production"
-        securityContext:
-          runAsNonRoot: true
-          runAsUser: 1001
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          capabilities:
-            drop:
-            - ALL
         volumeMounts:
         - name: tmp-volume
           mountPath: /tmp
@@ -67,12 +42,30 @@ spec:
           mountPath: /var/cache/nginx
         - name: var-run
           mountPath: /var/run
+        - name: nginx-pid
+          mountPath: /tmp/nginx
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
       volumes:
       - name: tmp-volume
         emptyDir: {}
       - name: var-cache-nginx
         emptyDir: {}
       - name: var-run
+        emptyDir: {}
+      - name: nginx-pid
         emptyDir: {}
       securityContext:
         fsGroup: 1001
@@ -88,6 +81,7 @@ spec:
                   values:
                   - algorithm-visualizer
               topologyKey: kubernetes.io/hostname
+
 
 
 

@@ -143,25 +143,13 @@ pipeline {
         }
         
         stage('Push to Registry') {
-            when {
-                anyOf {
-                    branch 'main'
-                    branch 'master'
-                    branch 'develop'
-                }
-            }
             steps {
                 script {
                     echo "📤 Pushing Docker image to registry..."
                     
                     docker.withRegistry('https://index.docker.io/v1/', 'docker-hub-credentials') {
-                        // Push tagged version
                         sh "docker push ${DOCKER_IMAGE}:${IMAGE_TAG}"
-                        
-                        // Push latest (only for main/master branch)
-                        if (env.BRANCH_NAME == 'main' || env.BRANCH_NAME == 'master') {
-                            sh "docker push ${DOCKER_IMAGE}:latest"
-                        }
+                        sh "docker push ${DOCKER_IMAGE}:latest"
                     }
                     
                     echo "✅ Docker image pushed successfully"
@@ -170,18 +158,11 @@ pipeline {
         }
         
         stage('Deploy to Kubernetes') {
-            when {
-                anyOf {
-                    branch 'main'
-                    branch 'master'
-                }
-            }
             steps {
                 script {
                     echo "🚀 Deploying to Kubernetes..."
                     
                     withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
-                        // Update deployment with new image
                         sh '''
                             # Update image in deployment
                             sed -i "s|image: .*|image: ${DOCKER_IMAGE}:${IMAGE_TAG}|g" k8s/deployment.yaml
@@ -198,8 +179,6 @@ pipeline {
                             
                             # Verify deployment
                             kubectl get pods -n algorithm-visualizer
-                            kubectl get services -n algorithm-visualizer
-                            kubectl get ingress -n algorithm-visualizer
                         '''
                     }
                     
@@ -252,6 +231,7 @@ pipeline {
         }
     }
 }
+
 
 
 

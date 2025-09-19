@@ -33,11 +33,10 @@ COPY nginx.conf /etc/nginx/nginx.conf
 # Copy static files from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy static files directly (for projects without build step)
+# Copy application files
 COPY index.html /usr/share/nginx/html/
 COPY style.css /usr/share/nginx/html/
 COPY app.js /usr/share/nginx/html/
-COPY app_1.js /usr/share/nginx/html/
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S nginx && \
@@ -61,3 +60,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]
+

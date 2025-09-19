@@ -404,3 +404,10 @@ After successful deployment, consider these enhancements:
 ---
 
 **🎉 Congratulations!** You now have a complete CI/CD pipeline for your Algorithm Visualizer application!
+
+# Test the exact same image locally
+docker run -p 8080:8080 anshthakur503/algorithm-visualizer:latest
+
+# If it works locally but fails in K8s, it's a configuration issue
+
+

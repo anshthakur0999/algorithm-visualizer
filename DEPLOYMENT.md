@@ -419,3 +419,4 @@ kubectl delete pods -n algorithm-visualizer -l app=algorithm-visualizer
 # Watch the new pods start
 kubectl get pods -n algorithm-visualizer -w
 
+

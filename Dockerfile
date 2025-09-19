@@ -27,9 +27,6 @@ FROM nginx:alpine
 # Install curl for health checks
 RUN apk add --no-cache curl
 
-# Copy custom nginx configuration
-COPY nginx.conf /etc/nginx/nginx.conf
-
 # Copy static files from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
@@ -37,6 +34,17 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 COPY index.html /usr/share/nginx/html/
 COPY style.css /usr/share/nginx/html/
 COPY app.js /usr/share/nginx/html/
+
+# Create nginx config for port 8080
+RUN echo 'server { \
+    listen 8080; \
+    server_name localhost; \
+    location / { \
+        root /usr/share/nginx/html; \
+        index index.html; \
+        try_files $uri $uri/ /index.html; \
+    } \
+}' > /etc/nginx/conf.d/default.conf
 
 # Set proper permissions for existing nginx user
 RUN chown -R nginx:nginx /usr/share/nginx/html && \
@@ -56,5 +64,6 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]
+
 
 

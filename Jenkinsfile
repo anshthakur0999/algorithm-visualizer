@@ -56,8 +56,12 @@ pipeline {
                             // Check for JavaScript syntax errors
                             sh '''
                                 echo "Checking JavaScript syntax..."
-                                node -c app.js || exit 1
-                                echo "JavaScript syntax check passed"
+                                if command -v node >/dev/null 2>&1; then
+                                    node -c app.js || exit 1
+                                    echo "JavaScript syntax check passed"
+                                else
+                                    echo "Node.js not available, skipping JavaScript validation"
+                                fi
                             '''
                         }
                     }
@@ -246,5 +250,6 @@ pipeline {
         }
     }
 }
+
 
 

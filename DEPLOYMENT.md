@@ -2,6 +2,30 @@
 
 This guide provides step-by-step instructions for setting up a complete CI/CD pipeline for the Algorithm Visualizer application using Jenkins, Docker, and Kubernetes on AWS.
 
+## 🔄 Accessing After System Restart
+
+To access and check your deployment after restarting your system:
+
+1. Configure kubectl to connect to your EKS cluster:
+```bash
+aws eks update-kubeconfig --region us-east-1 --name algorithm-visualizer-cluster
+```
+
+2. Check the service and get the external IP:
+```bash
+kubectl get svc -n algorithm-visualizer
+```
+
+3. The external IP will be listed under the EXTERNAL-IP column for the algorithm-visualizer-service. 
+   Access your application by entering this URL in your browser.
+
+4. To check the overall deployment status:
+```bash
+kubectl get pods,svc,deployment -n algorithm-visualizer
+```
+
+Note: Keep the external IP address saved somewhere accessible for quick reference.
+
 ## 🏗️ Architecture Overview
 
 ```

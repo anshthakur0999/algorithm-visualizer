@@ -11,22 +11,20 @@ iam:
 
 managedNodeGroups:
   - name: algorithm-visualizer-nodes
-    instanceType: t3.small
+    instanceType: t2.small
     minSize: 1
-    maxSize: 4
-    desiredCapacity: 2
+    maxSize: 1
+    desiredCapacity: 1
     volumeSize: 20
     ssh:
       allow: false
     labels:
       role: worker
-      environment: production
     tags:
       Environment: production
       Application: algorithm-visualizer
     iam:
       withAddonPolicies:
-        autoScaler: true
         albIngress: true
         cloudWatch: true
 
@@ -36,8 +34,6 @@ addons:
   - name: coredns
     version: latest
   - name: kube-proxy
-    version: latest
-  - name: aws-ebs-csi-driver
     version: latest
 
 cloudWatch:

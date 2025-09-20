@@ -46,6 +46,12 @@ fi
 
 echo -e "${GREEN}✅ Prerequisites check passed${NC}"
 
+# Check if cluster exists and delete if necessary
+if aws eks describe-cluster --name ${CLUSTER_NAME} --region ${REGION} 2>/dev/null; then
+    echo -e "${YELLOW}⚠️ Existing cluster found. Cleaning up...${NC}"
+    eksctl delete cluster --name ${CLUSTER_NAME} --region ${REGION} --wait
+fi
+
 # Create EKS cluster
 echo -e "${YELLOW}🏗️  Creating EKS cluster...${NC}"
 cat > cluster-config.yaml << EOF
@@ -62,22 +68,20 @@ iam:
 
 managedNodeGroups:
   - name: ${NODE_GROUP_NAME}
-    instanceType: t3.small
+    instanceType: t2.small
     minSize: 1
-    maxSize: 4
-    desiredCapacity: 2
+    maxSize: 1
+    desiredCapacity: 1
     volumeSize: 20
     ssh:
       allow: false
     labels:
       role: worker
-      environment: production
     tags:
       Environment: production
       Application: algorithm-visualizer
     iam:
       withAddonPolicies:
-        autoScaler: true
         albIngress: true
         cloudWatch: true
 
@@ -87,8 +91,6 @@ addons:
   - name: coredns
     version: latest
   - name: kube-proxy
-    version: latest
-  - name: aws-ebs-csi-driver
     version: latest
 
 cloudWatch:

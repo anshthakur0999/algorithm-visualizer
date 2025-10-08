@@ -144,10 +144,6 @@ Contributions are welcome! Here's how you can help:
 - Add algorithm performance comparisons
 - Implement dark/light theme toggle
 
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## 🙏 Acknowledgments
 
 - Inspired by various algorithm visualization tools

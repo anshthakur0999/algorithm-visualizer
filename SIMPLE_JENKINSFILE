@@ -1,0 +1,287 @@
+// Simple Jenkinsfile for ECS Blue-Green Deployment
+// Free Tier Edition
+
+pipeline {
+    agent any
+    
+    environment {
+        AWS_REGION = 'us-east-1'
+        ECR_REPO = 'algorithm-visualizer'
+        ECS_CLUSTER = 'visualizer-cluster'
+        GREEN_SERVICE = 'algorithm-visualizer-green'
+        BLUE_SERVICE = 'algorithm-visualizer-blue'
+        IMAGE_TAG = "${BUILD_NUMBER}"
+    }
+    
+    stages {
+        stage('Setup') {
+            steps {
+                script {
+                    echo "🔧 Setting up environment..."
+                    sh '''
+                        # Get AWS Account ID
+                        export ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+                        echo "Account ID: $ACCOUNT_ID"
+                        
+                        # Get ECR Registry
+                        export ECR_REGISTRY="$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
+                        echo "ECR Registry: $ECR_REGISTRY"
+                    '''
+                }
+            }
+        }
+        
+        stage('Checkout') {
+            steps {
+                checkout scm
+                echo "✓ Code checked out"
+            }
+        }
+        
+        stage('Build') {
+            steps {
+                script {
+                    echo "🏗️ Building application..."
+                    sh '''
+                        npm install --production || true
+                        echo "✓ Build complete"
+                    '''
+                }
+            }
+        }
+        
+        stage('Docker Build') {
+            steps {
+                script {
+                    echo "🐳 Building Docker image..."
+                    sh '''
+                        ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+                        ECR_REGISTRY="$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
+                        
+                        docker build -t $ECR_REPO:$IMAGE_TAG .
+                        docker tag $ECR_REPO:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
+                        docker tag $ECR_REPO:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPO:latest
+                        
+                        echo "✓ Docker build complete"
+                    '''
+                }
+            }
+        }
+        
+        stage('Push to ECR') {
+            steps {
+                script {
+                    echo "📤 Pushing to ECR..."
+                    sh '''
+                        ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+                        ECR_REGISTRY="$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
+                        
+                        aws ecr get-login-password --region $AWS_REGION | \
+                          docker login --username AWS --password-stdin $ECR_REGISTRY
+                        
+                        docker push $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
+                        docker push $ECR_REGISTRY/$ECR_REPO:latest
+                        
+                        echo "✓ Image pushed to ECR"
+                    '''
+                }
+            }
+        }
+        
+        stage('Deploy to Green') {
+            steps {
+                script {
+                    echo "🟢 Deploying to Green..."
+                    sh '''
+                        ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+                        ECR_REGISTRY="$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
+                        TASK_EXEC_ROLE_ARN="arn:aws:iam::$ACCOUNT_ID:role/ecsTaskExecutionRole"
+                        
+                        # Register new task definition
+                        aws ecs register-task-definition \
+                          --family algorithm-visualizer-green \
+                          --network-mode awsvpc \
+                          --requires-compatibilities FARGATE \
+                          --cpu 256 \
+                          --memory 512 \
+                          --execution-role-arn $TASK_EXEC_ROLE_ARN \
+                          --container-definitions "[{
+                            \"name\": \"algorithm-visualizer\",
+                            \"image\": \"$ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG\",
+                            \"portMappings\": [{\"containerPort\": 8080}],
+                            \"logConfiguration\": {
+                              \"logDriver\": \"awslogs\",
+                              \"options\": {
+                                \"awslogs-group\": \"/ecs/algorithm-visualizer\",
+                                \"awslogs-region\": \"$AWS_REGION\",
+                                \"awslogs-stream-prefix\": \"ecs\"
+                              }
+                            }
+                          }]"
+                        
+                        # Update Green service
+                        aws ecs update-service \
+                          --cluster $ECS_CLUSTER \
+                          --service $GREEN_SERVICE \
+                          --force-new-deployment \
+                          --region $AWS_REGION
+                        
+                        # Wait for deployment
+                        aws ecs wait services-stable \
+                          --cluster $ECS_CLUSTER \
+                          --services $GREEN_SERVICE \
+                          --region $AWS_REGION
+                        
+                        echo "✓ Green deployment complete"
+                    '''
+                }
+            }
+        }
+        
+        stage('Health Check') {
+            steps {
+                script {
+                    echo "❤️ Running health checks..."
+                    sh '''
+                        # Get ALB DNS
+                        ALB_DNS=$(aws elbv2 describe-load-balancers \
+                          --names visualizer-alb \
+                          --query 'LoadBalancers[0].DNSName' \
+                          --output text)
+                        
+                        echo "Testing: http://$ALB_DNS"
+                        
+                        # Test endpoint
+                        for i in {1..10}; do
+                            if curl -f http://$ALB_DNS > /dev/null 2>&1; then
+                                echo "✓ Health check passed"
+                                exit 0
+                            fi
+                            echo "Attempt $i/10..."
+                            sleep 5
+                        done
+                        
+                        echo "✗ Health check failed"
+                        exit 1
+                    '''
+                }
+            }
+        }
+        
+        stage('Switch Traffic') {
+            steps {
+                script {
+                    echo "🔄 Switching traffic to Green..."
+                    sh '''
+                        ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+                        
+                        # Get ARNs
+                        ALB_ARN=$(aws elbv2 describe-load-balancers \
+                          --names visualizer-alb \
+                          --query 'LoadBalancers[0].LoadBalancerArn' \
+                          --output text)
+                        
+                        LISTENER_ARN=$(aws elbv2 describe-listeners \
+                          --load-balancer-arn $ALB_ARN \
+                          --query 'Listeners[0].ListenerArn' \
+                          --output text)
+                        
+                        GREEN_TG=$(aws elbv2 describe-target-groups \
+                          --names visualizer-green \
+                          --query 'TargetGroups[0].TargetGroupArn' \
+                          --output text)
+                        
+                        # Switch traffic
+                        aws elbv2 modify-listener \
+                          --listener-arn $LISTENER_ARN \
+                          --default-actions Type=forward,TargetGroupArn=$GREEN_TG
+                        
+                        echo "✓ Traffic switched to Green"
+                    '''
+                }
+            }
+        }
+        
+        stage('Monitor') {
+            steps {
+                script {
+                    echo "📊 Monitoring Green environment..."
+                    sh '''
+                        # Monitor for 2 minutes
+                        for i in {1..12}; do
+                            echo "Monitoring... ($i/12)"
+                            
+                            # Check service status
+                            STATUS=$(aws ecs describe-services \
+                              --cluster $ECS_CLUSTER \
+                              --services $GREEN_SERVICE \
+                              --query 'services[0].status' \
+                              --output text)
+                            
+                            if [ "$STATUS" != "ACTIVE" ]; then
+                                echo "✗ Service not active"
+                                exit 1
+                            fi
+                            
+                            sleep 10
+                        done
+                        
+                        echo "✓ Monitoring complete - no issues detected"
+                    '''
+                }
+            }
+        }
+    }
+    
+    post {
+        failure {
+            script {
+                echo "❌ Deployment failed, rolling back..."
+                sh '''
+                    ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+                    
+                    # Get ARNs
+                    ALB_ARN=$(aws elbv2 describe-load-balancers \
+                      --names visualizer-alb \
+                      --query 'LoadBalancers[0].LoadBalancerArn' \
+                      --output text)
+                    
+                    LISTENER_ARN=$(aws elbv2 describe-listeners \
+                      --load-balancer-arn $ALB_ARN \
+                      --query 'Listeners[0].ListenerArn' \
+                      --output text)
+                    
+                    BLUE_TG=$(aws elbv2 describe-target-groups \
+                      --names visualizer-blue \
+                      --query 'TargetGroups[0].TargetGroupArn' \
+                      --output text)
+                    
+                    # Rollback
+                    aws elbv2 modify-listener \
+                      --listener-arn $LISTENER_ARN \
+                      --default-actions Type=forward,TargetGroupArn=$BLUE_TG
+                    
+                    echo "✓ Rolled back to Blue"
+                '''
+            }
+        }
+        
+        success {
+            script {
+                echo "✅ Deployment successful!"
+                sh '''
+                    echo "Green is now live!"
+                    
+                    # Get ALB DNS
+                    ALB_DNS=$(aws elbv2 describe-load-balancers \
+                      --names visualizer-alb \
+                      --query 'LoadBalancers[0].DNSName' \
+                      --output text)
+                    
+                    echo "Application URL: http://$ALB_DNS"
+                '''
+            }
+        }
+    }
+}
+

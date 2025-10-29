@@ -1,0 +1,19 @@
+[
+  {
+    "name": "algorithm-visualizer",
+    "image": "503015902469.dkr.ecr.us-east-1.amazonaws.com/algorithm-visualizer:v1.0",
+    "portMappings": [
+      {
+        "containerPort": 8080
+      }
+    ],
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "/ecs/algorithm-visualizer",
+        "awslogs-region": "us-east-1",
+        "awslogs-stream-prefix": "ecs"
+      }
+    }
+  }
+]

@@ -1,0 +1,30 @@
+{
+  "family": "algorithm-visualizer-task",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::503015902469:role/ecsTaskExecutionRole",
+  "containerDefinitions": [
+    {
+      "name": "algorithm-visualizer",
+      "image": "503015902469.dkr.ecr.us-east-1.amazonaws.com/algorithm-visualizer:v1.1",
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "protocol": "tcp"
+        }
+      ],
+      "essential": true,
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/algorithm-visualizer",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}
+
